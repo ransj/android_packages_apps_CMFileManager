@@ -39,6 +39,8 @@ import java.security.MessageDigest;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 
+import os.ransj.filemanager.Compat;
+
 /**
  * A helper class with useful methods for deal with android.
  */
@@ -147,11 +149,11 @@ public final class AndroidHelper {
     }
 
     public static boolean hasSupportForMultipleUsers(Context context) {
-        return UserManager.supportsMultipleUsers();
+        return Compat.UserManager_supportsMultipleUsers();
     }
 
     public static boolean isUserOwner() {
-        return UserHandle.myUserId() == UserHandle.USER_OWNER;
+        return Compat.UserHandle_myUserId() == Compat.UserHandle_USER_OWNER();
     }
 
     public static boolean isSecondaryUser(Context context) {

@@ -45,6 +45,8 @@ import java.util.LinkedHashMap;
 import java.util.WeakHashMap;
 import java.util.Map;
 
+import os.ransj.filemanager.Compat;
+
 /**
  * A class that holds icons for a more efficient access.
  */
@@ -153,9 +155,9 @@ public class IconHolder {
          * @return Drawable The drawable or null if cannot be extracted
          */
         private Drawable getImageDrawable(String file) {
-            Bitmap thumb = ThumbnailUtils.createImageThumbnail(
+            Bitmap thumb = Compat.ThumbnailUtils_createImageThumbnail(
                     MediaHelper.normalizeMediaPath(file),
-                    ThumbnailUtils.TARGET_SIZE_MICRO_THUMBNAIL);
+                    Compat.ThumbnailUtils_TARGET_SIZE_MICRO_THUMBNAIL());
             if (thumb == null) {
                 return null;
             }
@@ -171,7 +173,7 @@ public class IconHolder {
         private Drawable getVideoDrawable(String file) {
             Bitmap thumb = ThumbnailUtils.createVideoThumbnail(
                     MediaHelper.normalizeMediaPath(file),
-                    ThumbnailUtils.TARGET_SIZE_MICRO_THUMBNAIL);
+                    Compat.ThumbnailUtils_TARGET_SIZE_MICRO_THUMBNAIL());
             if (thumb == null) {
                 return null;
             }
@@ -189,8 +191,8 @@ public class IconHolder {
             if (path == null) {
                 return null;
             }
-            Bitmap thumb = ThumbnailUtils.createImageThumbnail(path,
-                    ThumbnailUtils.TARGET_SIZE_MICRO_THUMBNAIL);
+            Bitmap thumb = Compat.ThumbnailUtils_createImageThumbnail(path,
+                    Compat.ThumbnailUtils_TARGET_SIZE_MICRO_THUMBNAIL());
             if (thumb == null) {
                 return null;
             }

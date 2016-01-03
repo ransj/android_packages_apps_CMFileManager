@@ -101,6 +101,8 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
+import os.ransj.filemanager.Compat;
+
 /**
  * An activity for search files and folders.
  */
@@ -1490,7 +1492,7 @@ public class SearchActivity extends Activity
 
         @Override
         protected void onPostExecute(List<DataHolder> results) {
-            if (!isResumed()) {
+            if (!Compat.Activity_isResumed(SearchActivity.this)) {
                 return;
             }
             mAdapterList.clear();

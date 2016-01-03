@@ -65,6 +65,8 @@ import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
 
+import os.ransj.filemanager.Compat;
+
 /**
  * A class with the convenience methods to print documents
  */
@@ -281,7 +283,7 @@ public final class PrintActionPolicy extends ActionsPolicy {
                 .setContentType(PrintDocumentInfo.CONTENT_TYPE_DOCUMENT)
                 .setPageCount(calculatePageCount(rowsPerPage))
                 .build();
-            info.setDataSize(size);
+            Compat.PrintDocumentInfo_setDataSize(info, size);
             boolean changed = !newAttributes.equals(oldAttributes);
             callback.onLayoutFinished(info, changed);
         }

@@ -39,6 +39,8 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
+import os.ransj.filemanager.Compat;
+
 /**
  * A helper class for access and manage the preferences of the application.
  */
@@ -145,8 +147,8 @@ public final class Preferences {
     private static File getWorldReadablePropertiesFile(Context context) {
         String dataDir = context.getApplicationInfo().dataDir;
         if (AndroidHelper.isSecondaryUser(context)) {
-            dataDir = dataDir.replace(String.valueOf(UserHandle.myUserId()),
-                    String.valueOf(UserHandle.USER_OWNER));
+            dataDir = dataDir.replace(String.valueOf(Compat.UserHandle_myUserId()),
+                    String.valueOf(Compat.UserHandle_USER_OWNER()));
         }
         return new File(dataDir, SHARED_PROPERTIES_FILENAME);
     }

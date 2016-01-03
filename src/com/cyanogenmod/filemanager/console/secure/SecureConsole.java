@@ -62,6 +62,7 @@ import static de.schlichtherle.truezip.fs.FsSyncOption.CLEAR_CACHE;
 import static de.schlichtherle.truezip.fs.FsSyncOption.FORCE_CLOSE_INPUT;
 import static de.schlichtherle.truezip.fs.FsSyncOption.FORCE_CLOSE_OUTPUT;
 import de.schlichtherle.truezip.util.BitField;
+import os.ransj.filemanager.Compat;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -87,7 +88,7 @@ public class SecureConsole extends VirtualMountPointConsole {
 
     public static String getSecureStorageName() {
         return String.format("storage.%s.%s",
-                String.valueOf(UserHandle.myUserId()),
+                String.valueOf(Compat.UserHandle_myUserId()),
                 SecureStorageDriverProvider.SECURE_STORAGE_SCHEME);
     }
 

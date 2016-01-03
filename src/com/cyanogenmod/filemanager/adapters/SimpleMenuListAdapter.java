@@ -16,6 +16,7 @@
 
 package com.cyanogenmod.filemanager.adapters;
 
+import android.support.v7.view.menu.MenuBuilder;
 import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -27,7 +28,6 @@ import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.android.internal.view.menu.MenuBuilder;
 import com.cyanogenmod.filemanager.R;
 import com.cyanogenmod.filemanager.ui.ThemeManager;
 import com.cyanogenmod.filemanager.ui.ThemeManager.Theme;
