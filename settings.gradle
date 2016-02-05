@@ -1,0 +1,2 @@
+include 'UICommon'
+project(':UICommon').projectDir = new File('libs/UICommon')
