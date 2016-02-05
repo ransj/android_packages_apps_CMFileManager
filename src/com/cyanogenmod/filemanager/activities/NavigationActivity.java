@@ -26,11 +26,13 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.content.res.XmlResourceParser;
 import android.database.Cursor;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
+import android.Manifest;
 import android.net.Uri;
 import android.nfc.NfcAdapter;
 import android.nfc.NfcEvent;
@@ -40,6 +42,7 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.Parcelable;
 import android.os.storage.StorageVolume;
+import android.provider.Settings;
 import android.support.v4.app.ActionBarDrawerToggle;
 import android.support.v4.widget.DrawerLayout;
 import android.text.TextUtils;
@@ -119,6 +122,7 @@ import com.cyanogenmod.filemanager.util.FileHelper;
 import com.cyanogenmod.filemanager.util.MimeTypeHelper.MimeTypeCategory;
 import com.cyanogenmod.filemanager.util.MountPointHelper;
 import com.cyanogenmod.filemanager.util.StorageHelper;
+import com.cyngn.uicommon.view.Snackbar;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -492,15 +496,94 @@ public class NavigationActivity extends Activity
 
     private AsyncTask<Void, Void, Boolean> mBookmarksTask;
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    protected void onCreate(Bundle state) {
+    private static final int REQUEST_CODE_STORAGE_PERMS = 321;
+    private boolean hasPermissions() {
+        int res = checkCallingOrSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        return (res == PackageManager.PERMISSION_GRANTED);
+    }
 
-        if (DEBUG) {
-            Log.d(TAG, "NavigationActivity.onCreate"); //$NON-NLS-1$
+    private void requestNecessaryPermissions() {
+        String[] permissions = new String[] {
+                Manifest.permission.WRITE_EXTERNAL_STORAGE,
+        };
+        requestPermissions(permissions, REQUEST_CODE_STORAGE_PERMS);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            int[] grandResults) {
+        boolean allowed = true;
+        switch (requestCode) {
+            case REQUEST_CODE_STORAGE_PERMS:
+                for (int res : grandResults) {
+                    allowed = allowed && (res == PackageManager.PERMISSION_GRANTED);
+                }
+                break;
+            default:
+                allowed = false;
+                break;
         }
+        if (allowed) {
+            finishOnCreate();
+            if (mDrawerToggle != null) {
+                mDrawerToggle.syncState();
+            }
+        } else {
+            if (shouldShowRequestPermissionRationale(Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+                String text = getResources().getString(R.string.storage_permissions_denied);
+                final ViewGroup viewGroup = (ViewGroup) ((ViewGroup) this
+                        .findViewById(android.R.id.content)).getChildAt(0);
+                if (viewGroup != null) {
+                    Snackbar snackbar = Snackbar.make(viewGroup, text,
+                            Snackbar.LENGTH_INDEFINITE, 3);
+                    snackbar.setAction(android.R.string.ok, new OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            requestNecessaryPermissions();
+                        }
+                    });
+                    snackbar.show();
+                }
+            } else {
+                StringBuilder builder = new StringBuilder(getString(R.string
+                        .storage_permissions_denied));
+                builder.append("\n\n");
+                builder.append(getString(R.string.storage_permissions_explanation));
+                final ViewGroup viewGroup = (ViewGroup) ((ViewGroup) this
+                        .findViewById(android.R.id.content)).getChildAt(0);
+                if (viewGroup != null) {
+                    Snackbar snackbar = Snackbar.make(viewGroup, builder.toString(),
+                            Snackbar.LENGTH_INDEFINITE, 7);
+                    snackbar.setAction(R.string.snackbar_settings, new OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            startInstalledAppDetailsActivity(NavigationActivity.this);
+                            finish();
+                        }
+                    });
+                    snackbar.show();
+                }
+            }
+
+        }
+
+    }
+
+    public static void startInstalledAppDetailsActivity(final Activity context) {
+        if (context == null) {
+            return;
+        }
+        final Intent i = new Intent();
+        i.setAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+        i.addCategory(Intent.CATEGORY_DEFAULT);
+        i.setData(Uri.parse("package:" + context.getPackageName()));
+        i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        i.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
+        i.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
+        context.startActivity(i);
+    }
+
+    private void finishOnCreate() {
 
         // Register the broadcast receiver
         IntentFilter filter = new IntentFilter();
@@ -524,13 +607,6 @@ public class NavigationActivity extends Activity
         //the input manager service
         mImm = (InputMethodManager) this.getSystemService(
                 Context.INPUT_METHOD_SERVICE);
-
-        // Set the theme before setContentView
-        Theme theme = ThemeManager.getCurrentTheme(this);
-        theme.setBaseThemeNoActionBar(this);
-
-        //Set the main layout of the activity
-        setContentView(R.layout.navigation);
 
         //Initialize nfc adapter
         NfcAdapter mNfcAdapter = NfcAdapter.getDefaultAdapter(this);
@@ -624,8 +700,34 @@ public class NavigationActivity extends Activity
         EASY_MODE_ICONS.put(MimeTypeCategory.APP, getResources().getDrawable(R.drawable
                 .ic_em_application));
 
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected void onCreate(Bundle state) {
+
+        if (DEBUG) {
+            Log.d(TAG, "NavigationActivity.onCreate"); //$NON-NLS-1$
+        }
+
+         // Set the theme before setContentView
+        Theme theme = ThemeManager.getCurrentTheme(this);
+        theme.setBaseThemeNoActionBar(this);
+
+        //Set the main layout of the activity
+        setContentView(R.layout.navigation);
+
         //Save state
         super.onCreate(state);
+
+        if (!hasPermissions()) {
+            requestNecessaryPermissions();
+        } else {
+            finishOnCreate();
+        }
+
     }
 
     @Override
@@ -633,7 +735,8 @@ public class NavigationActivity extends Activity
         super.onStart();
 
         // Check restrictions
-        if (!FileManagerApplication.checkRestrictSecondaryUsersAccess(this, mChRooted)) {
+        if (!hasPermissions() ||
+                !FileManagerApplication.checkRestrictSecondaryUsersAccess(this, mChRooted)) {
             return;
         }
 
@@ -660,7 +763,9 @@ public class NavigationActivity extends Activity
     protected void onPostCreate(Bundle savedInstanceState) {
         super.onPostCreate(savedInstanceState);
         // Sync the toggle state after onRestoreInstanceState has occurred.
-        mDrawerToggle.syncState();
+        if (mDrawerToggle != null) {
+            mDrawerToggle.syncState();
+        }
     }
 
     /**
@@ -673,7 +778,9 @@ public class NavigationActivity extends Activity
         final boolean restore = TextUtils.isEmpty(navigateTo);
 
         //Initialize navigation
-        initNavigation(this.mCurrentNavigationView, restore, intent);
+        if (!hasPermissions()) {
+            initNavigation(this.mCurrentNavigationView, restore, intent);
+        }
 
         //Check the intent action
         checkIntent(intent);
@@ -685,8 +792,12 @@ public class NavigationActivity extends Activity
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
-        onLayoutChanged();
-        mDrawerToggle.onConfigurationChanged(newConfig);
+        if (hasPermissions()) {
+            onLayoutChanged();
+            if (mDrawerToggle != null ) {
+                mDrawerToggle.onConfigurationChanged(newConfig);
+            }
+        }
     }
 
     /**
@@ -1805,12 +1916,12 @@ public class NavigationActivity extends Activity
 
     @Override
     public void onBackPressed() {
-        if (mDrawerLayout.isDrawerOpen(Gravity.START)) {
+        if (mDrawerLayout != null && mDrawerLayout.isDrawerOpen(Gravity.START)) {
             mDrawerLayout.closeDrawer(Gravity.START);
             return;
         }
 
-        boolean upToParent = mHistory.size() > 0;
+        boolean upToParent = mHistory != null && mHistory.size() > 0;
 
         if (mNeedsEasyMode && !isEasyModeVisible() && !upToParent) {
             performShowEasyMode();
@@ -2556,9 +2667,11 @@ public class NavigationActivity extends Activity
 
     private void recycle() {
         // Recycle the navigation views
-        int cc = this.mNavigationViews.length;
-        for (int i = 0; i < cc; i++) {
-            this.mNavigationViews[i].recycle();
+        if (mNavigationViews != null) {
+            int cc = this.mNavigationViews.length;
+            for (int i = 0; i < cc; i++) {
+                this.mNavigationViews[i].recycle();
+            }
         }
         try {
             FileManagerApplication.destroyBackgroundConsole();
